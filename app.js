@@ -12,20 +12,8 @@ class Book {
 class UI {
     static displayBooks() {
         // hard-coded for templating
-        const StoredBooks = [
-            {
-                title: 'Book one',
-                author: 'John Doe',
-                isbn: '34343434'
-            },
-            {
-                title: 'Book two',
-                author: 'Jane Doe',
-                isbn: '23232323'
-            },
-        ];
 
-        const books = StoredBooks;
+        const books = Store.getBooks();
 
         books.forEach((book) => UI.addBookToList(book));
     }
@@ -76,6 +64,38 @@ class UI {
 
 }
 // Store Class: handles local storage
+// in localStorage, we cannot store objects, need to store as strings
+class Store {
+    static getBooks() {
+        let books;
+        if(localStorage.getItem('books') === null) {
+            books = [];
+        }
+        else {
+            books = JSON.parse(localStorage.getItem('books'))
+        } 
+
+        return books;
+    }
+
+    static addBook(book) {
+        const books = Store.getBooks();
+        books.push(book);
+
+        localStorage.setItem('books',JSON.stringify(books));
+    }
+
+    static removeBook(isbn) {
+        const books = Store.getBooks();
+        books.forEach((book, index) => {
+            if(book.isbn === isbn) {
+                books.splice(index,1);
+            }
+        });
+        localStorage.setItem('books', JSON.stringify(books));
+    }
+}
+
 
 // Event: display books
 document.addEventListener('DOMContentLoaded', UI.displayBooks);
@@ -98,7 +118,7 @@ document.querySelector('#book-form').addEventListener('submit', (e) => {
         
         // add to UI list
         UI.addBookToList(book);
-
+        Store.addBook(book);
         // clear form fields
         UI.clearFields();
         UI.showAlert('Book added','success');
@@ -110,7 +130,12 @@ document.querySelector('#book-form').addEventListener('submit', (e) => {
 
 // Event: remove book
 document.querySelector('#book-list').addEventListener('click', (e) => {
+
+    // remove book from ui
     UI.deleteBook(e.target);
+
+    // remove book from store
+    Store.removeBook(e.target.parentElement.previousElementSibling.textContent)
     UI.showAlert('Book removed','warning');
 })
 
